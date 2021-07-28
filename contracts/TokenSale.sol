@@ -1,7 +1,7 @@
 pragma solidity >=0.4.22 <0.9.0;
 import  "./DappToken.sol";
 contract TokenSale {
-    address admin;
+    address payable admin ;
     DappToken public tokenContract;
     uint256 public tokenPrice;
     uint256 public tokensSold;
@@ -24,5 +24,16 @@ contract TokenSale {
         tokensSold  += _numberOfTokens; 
 
         emit Sell(msg.sender, _numberOfTokens);
+    }
+
+    function endSale() public payable{
+        // admin can do this
+        // transfer remaining dapp tokens to admin
+        // destroy this contract
+        require(msg.sender == admin);
+        require(tokenContract.transfer(admin, tokenContract.balanceOf(address(this))));
+        //tokenContract.transfer(address(this), address(this).balance);
+        admin.transfer(address(this).balance);
+
     }
 }

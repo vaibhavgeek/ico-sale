@@ -42,25 +42,47 @@ contract('TokenSale', function(accounts){
             assert.equal(receipt.logs[0].args._amount, numberOfTokens, 'logs the transfer amount');
             return tokenSaleInstance.tokensSold();
          }).then(function(amount){
-             console.log(amount.toNumber());
+             //console.log(amount.toNumber());
              assert.equal(amount.toNumber(), numberOfTokens, "increments number of tokens sold");
              return tokeInstance.balanceOf(buyer);
          }).then(function(amount){
-            console.log(amount.toNumber());
+            //console.log(amount.toNumber());
             assert.equal(amount.toNumber(), numberOfTokens , "Equal Validation for balance");
              return tokeInstance.balanceOf(tokenSaleInstance.address);
          }).then(function(amount){
-            console.log(amount.toNumber());
-
+            //console.log(amount.toNumber());
              assert.equal(amount.toNumber(), tokensAvailable - numberOfTokens, "Equal Validation for balance");
              return tokenSaleInstance.buyTokens(numberOfTokens,{from: buyer, value: 1});
          }).then(assert.fail).catch(function(error){
-             console.log(error.message);
+             ///console.log(error.message);
             assert(error.message.indexOf('revert') >= 0 , "msg.value must equal number of tokens in wei");
             return tokenSaleInstance.buyTokens(800000, {from: buyer, value: numberOfTokens * tokenPrice});
          }).then(assert.fail).catch(function(error){
-             console.log(error.message);
+             //console.log(error.message);
              assert(error.message.indexOf('revert') >=0 , "kismat se zyada aur waqt se pehle kuch nahi milta");
          });
+     });
+
+     it("ends token sale", function(){
+        return DappToken.deployed().then(function(instance){
+            tokeInstance = instance;
+            return TokenSale.deployed();
+         }).then(function(instance){
+             tokenSaleInstance = instance;
+             return tokenSaleInstance.endSale({from: buyer});
+         }).then(assert.fail).catch(function(error){
+             console.log(error.message);
+             assert(error.message.indexOf('revert') >= 0, "end sale cannot be called from buyer check");
+             return tokenSaleInstance.endSale({from: admin});
+        }).then(function(receipt) {
+            return tokeInstance.balanceOf(admin);
+        }).then(async function(balance) {
+            //console.log(balance.toNumber());
+            assert.equal(balance.toNumber(), 999990, 'returns all unsold dapp tokens to admin');
+           // Check that the contract has no balance
+            balance = await web3.eth.getBalance(tokenSaleInstance.address);
+            //console.log(balance);
+            assert.equal(balance, 0);
+       });
      })
 })
